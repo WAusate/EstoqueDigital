@@ -46,39 +46,7 @@ function ThemeToggle() {
   );
 }
 
-function Router() {
-  const { isAuthenticated, isLoading, user } = useAuth();
-
-  // Show landing page for non-authenticated users
-  if (!isAuthenticated || isLoading) {
-    return (
-      <Switch>
-        <Route path="/" component={Landing} />
-        <Route component={Landing} /> {/* Redirect all routes to landing when not authenticated */}
-      </Switch>
-    );
-  }
-
-  // Authenticated user routes
-  return (
-    <Switch>
-      <Route path="/" component={Dashboard} />
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/materials" component={Materials} />
-      <Route path="/requisitions" component={Requisitions} />
-      <Route path="/my-requisitions" component={Requisitions} />
-      <Route path="/movements" component={Dashboard} /> {/* todo: create Movements page */}
-      <Route path="/reports" component={Dashboard} /> {/* todo: create Reports page */}
-      <Route path="/users" component={Dashboard} /> {/* todo: create Users page */}
-      <Route path="/audit" component={Dashboard} /> {/* todo: create Audit page */}
-      <Route path="/alerts" component={Dashboard} /> {/* todo: create Alerts page */}
-      <Route path="/settings" component={Dashboard} /> {/* todo: create Settings page */}
-      <Route component={NotFound} />
-    </Switch>
-  );
-}
-
-function App() {
+function AuthenticatedApp() {
   const { isAuthenticated, isLoading, user } = useAuth();
   
   // Custom sidebar width for inventory management application
@@ -87,35 +55,73 @@ function App() {
     "--sidebar-width-icon": "4rem",   // default icon width
   };
 
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+          <p className="mt-4 text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show landing page for non-authenticated users
+  if (!isAuthenticated) {
+    return (
+      <Switch>
+        <Route path="/" component={Landing} />
+        <Route component={Landing} /> {/* Redirect all routes to landing when not authenticated */}
+      </Switch>
+    );
+  }
+
+  // Authenticated user interface with sidebar
+  return (
+    <SidebarProvider style={style as React.CSSProperties}>
+      <div className="flex h-screen w-full">
+        <AppSidebar 
+          userRole={user?.role}
+          userName={user?.firstName && user?.lastName 
+            ? `${user.firstName} ${user.lastName}` 
+            : user?.email || 'Usuário'
+          }
+          userEmail={user?.email}
+          userImage={user?.profileImageUrl}
+        />
+        <div className="flex flex-col flex-1">
+          <header className="flex items-center justify-between p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <SidebarTrigger data-testid="button-sidebar-toggle" />
+            <ThemeToggle />
+          </header>
+          <main className="flex-1 overflow-auto p-6">
+            <Switch>
+              <Route path="/" component={Dashboard} />
+              <Route path="/dashboard" component={Dashboard} />
+              <Route path="/materials" component={Materials} />
+              <Route path="/requisitions" component={Requisitions} />
+              <Route path="/my-requisitions" component={Requisitions} />
+              <Route path="/movements" component={Dashboard} /> {/* todo: create Movements page */}
+              <Route path="/reports" component={Dashboard} /> {/* todo: create Reports page */}
+              <Route path="/users" component={Dashboard} /> {/* todo: create Users page */}
+              <Route path="/audit" component={Dashboard} /> {/* todo: create Audit page */}
+              <Route path="/alerts" component={Dashboard} /> {/* todo: create Alerts page */}
+              <Route path="/settings" component={Dashboard} /> {/* todo: create Settings page */}
+              <Route component={NotFound} />
+            </Switch>
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
+  );
+}
+
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        {isAuthenticated && !isLoading ? (
-          <SidebarProvider style={style as React.CSSProperties}>
-            <div className="flex h-screen w-full">
-              <AppSidebar 
-                userRole={user?.role}
-                userName={user?.firstName && user?.lastName 
-                  ? `${user.firstName} ${user.lastName}` 
-                  : user?.email || 'Usuário'
-                }
-                userEmail={user?.email}
-                userImage={user?.profileImageUrl}
-              />
-              <div className="flex flex-col flex-1">
-                <header className="flex items-center justify-between p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                  <SidebarTrigger data-testid="button-sidebar-toggle" />
-                  <ThemeToggle />
-                </header>
-                <main className="flex-1 overflow-auto p-6">
-                  <Router />
-                </main>
-              </div>
-            </div>
-          </SidebarProvider>
-        ) : (
-          <Router />
-        )}
+        <AuthenticatedApp />
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>
