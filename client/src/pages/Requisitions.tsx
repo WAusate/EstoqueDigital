@@ -9,22 +9,57 @@ import RequisitionForm from "@/components/RequisitionForm";
 import DigitalSignature from "@/components/DigitalSignature";
 import { Plus, ClipboardList, Search, Filter, Eye, PenTool } from "lucide-react";
 
+type RequisitionStatus = "PENDENTE" | "ASSINADA" | "CANCELADA";
+
+type Requisition = {
+  id: string;
+  employeeName: string;
+  materialName: string;
+  materialCode: string;
+  quantity: number;
+  unit: string;
+  observation: string;
+  status: RequisitionStatus;
+  createdAt: string;
+};
+
+type RequisitionFormValues = {
+  employeeId: string;
+  materialId: string;
+  quantity: number;
+  observation?: string;
+};
+
+type Employee = {
+  id: string;
+  name: string;
+  email?: string;
+};
+
+type Material = {
+  id: string;
+  name: string;
+  code: string;
+  currentStock: number;
+  unit: string;
+};
+
 // todo: remove mock data when connecting to real backend
-const mockEmployees = [
+const mockEmployees: Employee[] = [
   { id: '1', name: 'João Silva', email: 'joao@empresa.com' },
   { id: '2', name: 'Maria Santos', email: 'maria@empresa.com' },
   { id: '3', name: 'Carlos Oliveira', email: 'carlos@empresa.com' },
   { id: '4', name: 'Ana Costa', email: 'ana@empresa.com' },
 ];
 
-const mockMaterials = [
+const mockMaterials: Material[] = [
   { id: '1', name: 'Parafuso Phillips M6 x 50mm', code: 'PAR-M6-001', currentStock: 45, unit: 'un' },
   { id: '2', name: 'Chapa de Aço Inox 304', code: 'CHA-INOX-001', currentStock: 0, unit: 'm²' },
   { id: '3', name: 'Tinta Primer Branca', code: 'TIN-PRI-001', currentStock: 25, unit: 'l' },
   { id: '4', name: 'Cabo Flexível 2,5mm²', code: 'CAB-FLE-001', currentStock: 8, unit: 'm' },
 ];
 
-const mockRequisitions = [
+const mockRequisitions: Requisition[] = [
   {
     id: '1',
     employeeName: 'João Silva',
@@ -72,34 +107,34 @@ const mockRequisitions = [
 ];
 
 export default function Requisitions() {
-  const [requisitions, setRequisitions] = useState(mockRequisitions);
+  const [requisitions, setRequisitions] = useState<Requisition[]>(mockRequisitions);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | RequisitionStatus>("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [viewingRequisition, setViewingRequisition] = useState(null);
-  const [signingRequisition, setSigningRequisition] = useState(null);
+  const [viewingRequisition, setViewingRequisition] = useState<Requisition | null>(null);
+  const [signingRequisition, setSigningRequisition] = useState<Requisition | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const filteredRequisitions = requisitions.filter(req => {
+  const filteredRequisitions = requisitions.filter((req) => {
     const matchesSearch = req.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          req.materialName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          req.materialCode.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesStatus = statusFilter === "all" || req.status === statusFilter;
-    
+
     return matchesSearch && matchesStatus;
   });
 
-  const handleCreateRequisition = async (data: any) => {
+  const handleCreateRequisition = (data: RequisitionFormValues) => {
     setIsLoading(true);
     console.log('Creating requisition:', data);
-    
+
     // todo: replace with actual API call
     setTimeout(() => {
       const employee = mockEmployees.find(e => e.id === data.employeeId);
       const material = mockMaterials.find(m => m.id === data.materialId);
       
-      const newRequisition = {
+      const newRequisition: Requisition = {
         id: String(requisitions.length + 1),
         employeeName: employee?.name || '',
         materialName: material?.name || '',
@@ -110,7 +145,7 @@ export default function Requisitions() {
         status: 'PENDENTE' as const,
         createdAt: new Date().toISOString(),
       };
-      
+
       setRequisitions([newRequisition, ...requisitions]);
       setIsLoading(false);
       setIsFormOpen(false);
@@ -118,16 +153,16 @@ export default function Requisitions() {
     }, 1000);
   };
 
-  const handleSignRequisition = async (password: string) => {
+  const handleSignRequisition = (password: string) => {
     if (!signingRequisition) return;
-    
+
     setIsLoading(true);
     console.log('Signing requisition:', signingRequisition.id, 'with password verification');
     
     // todo: replace with actual API call
     setTimeout(() => {
-      setRequisitions(requisitions.map(req => 
-        req.id === signingRequisition.id 
+      setRequisitions(requisitions.map((req) =>
+        req.id === signingRequisition.id
           ? { ...req, status: 'ASSINADA' as const }
           : req
       ));
@@ -137,7 +172,7 @@ export default function Requisitions() {
     }, 1500);
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: RequisitionStatus) => {
     switch (status) {
       case 'PENDENTE':
         return <Badge variant="secondary">Pendente</Badge>;
@@ -275,7 +310,7 @@ export default function Requisitions() {
               />
             </div>
             <div className="flex gap-2">
-              {['all', 'PENDENTE', 'ASSINADA', 'CANCELADA'].map((status) => (
+              {(['all', 'PENDENTE', 'ASSINADA', 'CANCELADA'] as const).map((status) => (
                 <Button
                   key={status}
                   variant={statusFilter === status ? "default" : "outline"}

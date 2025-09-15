@@ -1,4 +1,14 @@
-import { BarChart3, Package, ClipboardList, Users, Settings, Shield, AlertTriangle, LayoutDashboard } from "lucide-react";
+import {
+  BarChart3,
+  Package,
+  ClipboardList,
+  Users,
+  Settings,
+  Shield,
+  AlertTriangle,
+  LayoutDashboard,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 import {
@@ -17,8 +27,15 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
+type MenuItem = {
+  title: string;
+  url: string;
+  icon: LucideIcon;
+  badge?: number;
+};
+
 // Menu items for different roles
-const adminMenuItems = [
+const adminMenuItems: MenuItem[] = [
   {
     title: "Dashboard",
     url: "/dashboard",
@@ -52,7 +69,7 @@ const adminMenuItems = [
   },
 ];
 
-const stockMenuItems = [
+const stockMenuItems: MenuItem[] = [
   {
     title: "Dashboard",
     url: "/dashboard",
@@ -82,7 +99,7 @@ const stockMenuItems = [
   },
 ];
 
-const employeeMenuItems = [
+const employeeMenuItems: MenuItem[] = [
   {
     title: "Dashboard",
     url: "/dashboard",

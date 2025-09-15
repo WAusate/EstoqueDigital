@@ -6,8 +6,26 @@ import MaterialsTable from "@/components/MaterialsTable";
 import MaterialForm from "@/components/MaterialForm";
 import { Plus, Package, Upload, Download } from "lucide-react";
 
+type Material = {
+  id: string;
+  name: string;
+  code: string;
+  unit: string;
+  unitPrice?: number;
+  minimumStock: number;
+  currentStock: number;
+};
+
+type MaterialFormValues = {
+  name: string;
+  code: string;
+  unit: string;
+  unitPrice?: number;
+  minimumStock: number;
+};
+
 // todo: remove mock data when connecting to real backend
-const mockMaterials = [
+const mockMaterials: Material[] = [
   {
     id: '1',
     name: 'Parafuso Phillips M6 x 50mm',
@@ -56,15 +74,15 @@ const mockMaterials = [
 ];
 
 export default function Materials() {
-  const [materials, setMaterials] = useState(mockMaterials);
+  const [materials, setMaterials] = useState<Material[]>(mockMaterials);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingMaterial, setEditingMaterial] = useState(null);
+  const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleCreateMaterial = async (data: any) => {
+  const handleCreateMaterial = async (data: MaterialFormValues) => {
     setIsLoading(true);
     console.log('Creating material:', data);
-    
+
     // todo: replace with actual API call
     setTimeout(() => {
       const newMaterial = {
@@ -79,16 +97,16 @@ export default function Materials() {
     }, 1000);
   };
 
-  const handleUpdateMaterial = async (data: any) => {
+  const handleUpdateMaterial = async (data: MaterialFormValues) => {
     if (!editingMaterial) return;
-    
+
     setIsLoading(true);
     console.log('Updating material:', editingMaterial.id, data);
-    
+
     // todo: replace with actual API call
     setTimeout(() => {
-      setMaterials(materials.map(m => 
-        m.id === editingMaterial.id ? { ...m, ...data } : m
+      setMaterials(materials.map((material) =>
+        material.id === editingMaterial.id ? { ...material, ...data } : material
       ));
       setIsLoading(false);
       setIsFormOpen(false);
@@ -97,7 +115,7 @@ export default function Materials() {
     }, 1000);
   };
 
-  const handleEditMaterial = (material: any) => {
+  const handleEditMaterial = (material: Material) => {
     setEditingMaterial(material);
     setIsFormOpen(true);
     console.log('Editing material:', material.id);
