@@ -84,6 +84,11 @@ const stockMenuItems = [
 
 const employeeMenuItems = [
   {
+    title: "Materiais",
+    url: "/materiais",
+    icon: Package,
+  },
+  {
     title: "Minhas Requisições",
     url: "/my-requisitions",
     icon: ClipboardList,
