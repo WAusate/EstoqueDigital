@@ -112,6 +112,7 @@ const employeeMenuItems: MenuItem[] = [
   },
 ];
 
+
 interface AppSidebarProps {
   userRole?: string;
   userName?: string;
