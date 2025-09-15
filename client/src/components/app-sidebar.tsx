@@ -26,7 +26,7 @@ const adminMenuItems = [
   },
   {
     title: "Materiais",
-    url: "/materials",
+    url: "/materiais",
     icon: Package,
   },
   {
@@ -60,7 +60,7 @@ const stockMenuItems = [
   },
   {
     title: "Materiais",
-    url: "/materials",
+    url: "/materiais",
     icon: Package,
   },
   {
