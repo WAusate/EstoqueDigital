@@ -101,6 +101,7 @@ function AuthenticatedApp() {
               <Route path="/dashboard" component={Dashboard} />
               <Route path="/materials" component={Materials} />
               <Route path="/materiais" component={Materials} />
+              <Route path="/requisicoes" component={Requisitions} />
               <Route path="/requisitions" component={Requisitions} />
               <Route path="/my-requisitions" component={Requisitions} />
               <Route path="/movements" component={Dashboard} /> {/* todo: create Movements page */}

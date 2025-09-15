@@ -1,4 +1,14 @@
-import { BarChart3, Package, ClipboardList, Users, Settings, Shield, Home, AlertTriangle } from "lucide-react";
+import {
+  BarChart3,
+  Package,
+  ClipboardList,
+  Users,
+  Settings,
+  Shield,
+  AlertTriangle,
+  LayoutDashboard,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 import {
@@ -17,23 +27,30 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
+type MenuItem = {
+  title: string;
+  url: string;
+  icon: LucideIcon;
+  badge?: number;
+};
+
 // Menu items for different roles
-const adminMenuItems = [
+const adminMenuItems: MenuItem[] = [
   {
     title: "Dashboard",
-    url: "/",
-    icon: Home,
+    url: "/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    title: "Requisições",
+    url: "/requisicoes",
+    icon: ClipboardList,
+    badge: 5, // todo: get real count from backend
   },
   {
     title: "Materiais",
     url: "/materiais",
     icon: Package,
-  },
-  {
-    title: "Requisições",
-    url: "/requisitions",
-    icon: ClipboardList,
-    badge: 5, // todo: get real count from backend
   },
   {
     title: "Relatórios",
@@ -52,11 +69,17 @@ const adminMenuItems = [
   },
 ];
 
-const stockMenuItems = [
+const stockMenuItems: MenuItem[] = [
   {
     title: "Dashboard",
-    url: "/",
-    icon: Home,
+    url: "/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    title: "Requisições",
+    url: "/requisicoes",
+    icon: ClipboardList,
+    badge: 5,
   },
   {
     title: "Materiais",
@@ -69,12 +92,6 @@ const stockMenuItems = [
     icon: BarChart3,
   },
   {
-    title: "Requisições",
-    url: "/requisitions",
-    icon: ClipboardList,
-    badge: 5,
-  },
-  {
     title: "Alertas",
     url: "/alerts",
     icon: AlertTriangle,
@@ -82,16 +99,15 @@ const stockMenuItems = [
   },
 ];
 
-const employeeMenuItems = [
+const employeeMenuItems: MenuItem[] = [
+  {
+ main
+    icon: ClipboardList,
+  },
   {
     title: "Materiais",
     url: "/materiais",
     icon: Package,
-  },
-  {
-    title: "Minhas Requisições",
-    url: "/my-requisitions",
-    icon: ClipboardList,
   },
 ];
 
@@ -102,13 +118,20 @@ interface AppSidebarProps {
   userImage?: string;
 }
 
-export function AppSidebar({ 
-  userRole = "ADMIN", 
-  userName = "Usuário", 
+export function AppSidebar({
+  userRole = "ADMIN",
+  userName = "Usuário",
   userEmail,
-  userImage 
+  userImage
 }: AppSidebarProps) {
   const [location] = useLocation();
+
+  const formatTestId = (title: string) =>
+    title
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, "-");
 
   const getMenuItems = () => {
     switch (userRole) {
@@ -161,19 +184,19 @@ export function AppSidebar({
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton 
-                    asChild 
+                  <SidebarMenuButton
+                    asChild
                     isActive={location === item.url}
-                    data-testid={`nav-${item.title.toLowerCase().replace(/\\s+/g, '-')}`}
+                    data-testid={`nav-${formatTestId(item.title)}`}
                   >
                     <Link href={item.url}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
                       {item.badge && (
-                        <Badge 
-                          variant="secondary" 
+                        <Badge
+                          variant="secondary"
                           className="ml-auto h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
-                          data-testid={`badge-${item.title.toLowerCase().replace(/\\s+/g, '-')}`}
+                          data-testid={`badge-${formatTestId(item.title)}`}
                         >
                           {item.badge}
                         </Badge>
