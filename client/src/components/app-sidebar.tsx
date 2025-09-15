@@ -101,7 +101,7 @@ const stockMenuItems: MenuItem[] = [
 
 const employeeMenuItems: MenuItem[] = [
   {
-    title: "Minhas Requisições",
+    title: "Requisições",
     url: "/my-requisitions",
     icon: ClipboardList,
   },
@@ -111,6 +111,7 @@ const employeeMenuItems: MenuItem[] = [
     icon: Package,
   },
 ];
+
 
 interface AppSidebarProps {
   userRole?: string;
