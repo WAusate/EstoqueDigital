@@ -101,7 +101,8 @@ const stockMenuItems: MenuItem[] = [
 
 const employeeMenuItems: MenuItem[] = [
   {
- main
+    title: "Requisições",
+    url: "/my-requisitions",
     icon: ClipboardList,
   },
   {
