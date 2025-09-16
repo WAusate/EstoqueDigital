@@ -18,12 +18,24 @@ import {
 import { db } from "./db";
 import { eq, and, desc, gte, lte, sql, count } from "drizzle-orm";
 
+type UserSummary = Pick<User, "id" | "firstName" | "lastName" | "email">;
+type EmployeeRequisitionDetails = Requisition & {
+  material: Pick<Material, "id" | "name" | "code" | "unit">;
+  createdBy: UserSummary | null;
+};
+
 // Interface for storage operations
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
-  
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createEmployeeUser(params: {
+    name: string;
+    email: string;
+    passwordHash: string;
+  }): Promise<User>;
+
   // Material operations
   getMaterials(): Promise<Material[]>;
   getMaterial(id: string): Promise<Material | undefined>;
@@ -38,9 +50,15 @@ export interface IStorage {
   
   // Requisition operations
   getRequisitions(employeeId?: string): Promise<Requisition[]>;
+  getEmployeeRequisitionsWithDetails(employeeId: string): Promise<EmployeeRequisitionDetails[]>;
   createRequisition(requisition: InsertRequisition): Promise<Requisition>;
   updateRequisition(id: string, requisition: Partial<InsertRequisition>): Promise<Requisition>;
-  signRequisition(id: string, signedByDevice?: string, signedByIp?: string): Promise<Requisition>;
+  signRequisition(
+    id: string,
+    signedByDevice?: string,
+    signedByIp?: string,
+    signerId?: string,
+  ): Promise<Requisition>;
   
   // Dashboard operations
   getDashboardStats(startDate?: Date, endDate?: Date): Promise<any>;
@@ -72,7 +90,44 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return user;
   }
-  
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const normalizedEmail = email.toLowerCase();
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, normalizedEmail));
+    return user;
+  }
+
+  async createEmployeeUser({
+    name,
+    email,
+    passwordHash,
+  }: {
+    name: string;
+    email: string;
+    passwordHash: string;
+  }): Promise<User> {
+    const normalizedEmail = email.toLowerCase();
+    const trimmedName = name.trim();
+    const [firstName, ...rest] = trimmedName.split(/\s+/);
+    const lastName = rest.length > 0 ? rest.join(" ") : null;
+
+    const [user] = await db
+      .insert(users)
+      .values({
+        email: normalizedEmail,
+        firstName: firstName || trimmedName,
+        lastName: lastName || null,
+        passwordHash,
+        role: 'FUNCIONARIO',
+      })
+      .returning();
+
+    return user;
+  }
+
   // Material operations
   async getMaterials(): Promise<Material[]> {
     return await db.select().from(materials).orderBy(materials.name);
@@ -146,12 +201,39 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(requisitions)
       .orderBy(desc(requisitions.createdAt));
-    
+
     if (employeeId) {
       return await query.where(eq(requisitions.employeeId, employeeId));
     }
-    
+
     return await query;
+  }
+
+  async getEmployeeRequisitionsWithDetails(
+    employeeId: string,
+  ): Promise<EmployeeRequisitionDetails[]> {
+    return await db.query.requisitions.findMany({
+      where: eq(requisitions.employeeId, employeeId),
+      orderBy: desc(requisitions.createdAt),
+      with: {
+        material: {
+          columns: {
+            id: true,
+            name: true,
+            code: true,
+            unit: true,
+          },
+        },
+        createdBy: {
+          columns: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+    });
   }
 
   async createRequisition(requisition: InsertRequisition): Promise<Requisition> {
@@ -168,7 +250,38 @@ export class DatabaseStorage implements IStorage {
     return updatedRequisition;
   }
 
-  async signRequisition(id: string, signedByDevice?: string, signedByIp?: string): Promise<Requisition> {
+  async signRequisition(
+    id: string,
+    signedByDevice?: string,
+    signedByIp?: string,
+    signerId?: string,
+  ): Promise<Requisition> {
+    const requisition = await db.query.requisitions.findFirst({
+      where: eq(requisitions.id, id),
+      with: {
+        material: true,
+        employee: true,
+      },
+    });
+
+    if (!requisition) {
+      const error = new Error("Requisition not found");
+      (error as any).status = 404;
+      throw error;
+    }
+
+    if (signerId && requisition.employeeId !== signerId) {
+      const error = new Error("Unauthorized to sign this requisition");
+      (error as any).status = 403;
+      throw error;
+    }
+
+    if (requisition.status === 'ASSINADA') {
+      const error = new Error("Requisition already signed");
+      (error as any).status = 400;
+      throw error;
+    }
+
     const [signedRequisition] = await db
       .update(requisitions)
       .set({
@@ -180,27 +293,20 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(requisitions.id, id))
       .returning();
-    
-    // Create stock movement for signed requisition
-    const requisition = await db.query.requisitions.findFirst({
-      where: eq(requisitions.id, id),
-      with: {
-        material: true,
-        employee: true,
-      },
+
+    const observationText = requisition.observation
+      ? `Requisição assinada - ${requisition.observation}`
+      : 'Requisição assinada';
+
+    await this.createStockMovement({
+      materialId: requisition.materialId,
+      type: 'SAIDA',
+      quantity: requisition.quantity,
+      observation: observationText,
+      userId: requisition.employeeId,
+      requisitionId: id,
     });
-    
-    if (requisition) {
-      await this.createStockMovement({
-        materialId: requisition.materialId,
-        type: 'SAIDA',
-        quantity: requisition.quantity,
-        observation: `Requisição assinada - ${requisition.observation || ''}`,
-        userId: requisition.employeeId,
-        requisitionId: id,
-      });
-    }
-    
+
     return signedRequisition;
   }
   

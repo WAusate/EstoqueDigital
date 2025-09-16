@@ -16,6 +16,7 @@ import Dashboard from "@/pages/Dashboard";
 import Materials from "@/pages/Materials";
 import Requisitions from "@/pages/Requisitions";
 import NotFound from "@/pages/not-found";
+import EmployeeAccess from "@/pages/EmployeeAccess";
 
 function ThemeToggle() {
   const [isDark, setIsDark] = useState(false);
@@ -123,7 +124,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <AuthenticatedApp />
+        <Switch>
+          <Route path="/cadastro-funcionario" component={EmployeeAccess} />
+          <Route component={AuthenticatedApp} />
+        </Switch>
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>
