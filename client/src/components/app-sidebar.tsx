@@ -170,12 +170,12 @@ export function AppSidebar({
   return (
     <Sidebar data-testid="sidebar-main">
       {/* Header só com a logo */}
-      <SidebarHeader className="py-1">
+      <SidebarHeader className="py-2">
         <div className="flex justify-center w-full">
           <img 
             src="/Logo RV.png" 
             alt="Logo RV" 
-            className="block h-8 w-auto"
+            className="block h-12 w-auto"
           />
         </div>
       </SidebarHeader>
