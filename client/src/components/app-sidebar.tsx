@@ -170,8 +170,8 @@ export function AppSidebar({
   return (
     <Sidebar data-testid="sidebar-main">
       {/* Header só com a logo */}
-      <SidebarHeader className="!px-0 !py-1">
-        <div className="flex justify-center">
+      <SidebarHeader className="py-1">
+        <div className="flex justify-center w-full">
           <img 
             src="/Logo RV.png" 
             alt="Logo RV" 
@@ -235,7 +235,7 @@ export function AppSidebar({
         )}
       </SidebarContent>
 
-      <SidebarFooter className="p-2">
+      <SidebarFooter className="px-2 py-2">
         <div className="flex items-center gap-2 p-1.5 rounded-lg bg-sidebar-accent/50">
           <Avatar className="h-6 w-6">
             <AvatarImage src={userImage} alt={userName} />
