@@ -8,9 +8,12 @@ import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
-if (!process.env.REPLIT_DOMAINS) {
-  throw new Error("Environment variable REPLIT_DOMAINS not provided");
-}
+const hasReplitAuthConfig = Boolean(
+  process.env.REPLIT_DOMAINS && process.env.REPL_ID && process.env.SESSION_SECRET,
+);
+const hasDatabaseUrl = Boolean(process.env.DATABASE_URL);
+let hasLoggedSessionWarning = false;
+let hasLoggedAuthWarning = false;
 
 const getOidcConfig = memoize(
   async () => {
@@ -24,24 +27,39 @@ const getOidcConfig = memoize(
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
-  const pgStore = connectPg(session);
-  const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
-    ttl: sessionTtl,
-    tableName: "sessions",
-  });
-  return session({
-    secret: process.env.SESSION_SECRET!,
-    store: sessionStore,
+  const secureCookies = process.env.NODE_ENV === "production";
+  const secret = process.env.SESSION_SECRET ?? "insecure-development-secret";
+
+  if (!process.env.SESSION_SECRET && !hasLoggedSessionWarning) {
+    console.warn(
+      "SESSION_SECRET is not set. Falling back to a development-only secret. Session data will not be secure.",
+    );
+    hasLoggedSessionWarning = true;
+  }
+
+  const sessionOptions: session.SessionOptions = {
+    secret,
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: secureCookies,
+      sameSite: secureCookies ? "none" : "lax",
       maxAge: sessionTtl,
     },
-  });
+  };
+
+  if (hasDatabaseUrl) {
+    const PgStore = connectPg(session);
+    sessionOptions.store = new PgStore({
+      conString: process.env.DATABASE_URL,
+      createTableIfMissing: true,
+      ttl: sessionTtl,
+      tableName: "sessions",
+    });
+  }
+
+  return session(sessionOptions);
 }
 
 function updateUserSession(
@@ -69,6 +87,17 @@ async function upsertUser(
 export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
   app.use(getSession());
+
+  if (!hasReplitAuthConfig) {
+    if (!hasLoggedAuthWarning) {
+      console.warn(
+        "Replit authentication environment variables are missing. OIDC authentication is disabled for this session.",
+      );
+      hasLoggedAuthWarning = true;
+    }
+    return;
+  }
+
   app.use(passport.initialize());
   app.use(passport.session());
 
@@ -84,8 +113,9 @@ export async function setupAuth(app: Express) {
     verified(null, user);
   };
 
-  for (const domain of process.env
-    .REPLIT_DOMAINS!.split(",")) {
+  const domains = process.env.REPLIT_DOMAINS!.split(",").map((domain) => domain.trim()).filter(Boolean);
+
+  for (const domain of domains) {
     const strategy = new Strategy(
       {
         name: `replitauth:${domain}`,
@@ -128,9 +158,14 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  const user = req.user as any;
+  if (!hasReplitAuthConfig) {
+    return next();
+  }
 
-  if (!req.isAuthenticated() || !user.expires_at) {
+  const user = req.user as any;
+  const isLoggedIn = typeof req.isAuthenticated === "function" && req.isAuthenticated();
+
+  if (!isLoggedIn || !user?.expires_at) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
