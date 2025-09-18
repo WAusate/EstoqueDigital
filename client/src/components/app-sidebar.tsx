@@ -117,8 +117,6 @@ const employeeMenuItems: MenuItem[] = [
   },
 ];
 
-
-
 interface AppSidebarProps {
   userRole?: string;
   userName?: string;
@@ -171,23 +169,20 @@ export function AppSidebar({
 
   return (
     <Sidebar data-testid="sidebar-main">
-      <SidebarHeader className="p-4">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Package className="h-4 w-4" />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold">Sistema de Estoque</span>
-            <span className="text-xs text-muted-foreground">
-              Gestão Digital
-            </span>
-          </div>
+      {/* Header só com a logo */}
+      <SidebarHeader className="!px-0 !py-1">
+        <div className="flex justify-center">
+          <img 
+            src="/Logo RV.png" 
+            alt="Logo RV" 
+            className="block h-8 w-auto"
+          />
         </div>
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-xs px-2">Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
@@ -198,12 +193,12 @@ export function AppSidebar({
                     data-testid={`nav-${formatTestId(item.title)}`}
                   >
                     <Link href={item.url}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      <item.icon className="h-3.5 w-3.5" />
+                      <span className="text-sm">{item.title}</span>
                       {item.badge && (
                         <Badge
                           variant="secondary"
-                          className="ml-auto h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
+                          className="ml-auto h-4 w-4 rounded-full p-0 text-xs flex items-center justify-center"
                           data-testid={`badge-${formatTestId(item.title)}`}
                         >
                           {item.badge}
@@ -219,7 +214,7 @@ export function AppSidebar({
 
         {userRole === "ADMIN" && (
           <SidebarGroup>
-            <SidebarGroupLabel>Configurações</SidebarGroupLabel>
+            <SidebarGroupLabel className="text-xs px-2">Config</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
@@ -229,8 +224,8 @@ export function AppSidebar({
                     data-testid="nav-settings"
                   >
                     <Link href="/settings">
-                      <Settings className="h-4 w-4" />
-                      <span>Configurações</span>
+                      <Settings className="h-3.5 w-3.5" />
+                      <span className="text-sm">Configurações</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -240,30 +235,30 @@ export function AppSidebar({
         )}
       </SidebarContent>
 
-      <SidebarFooter className="p-4">
-        <div className="flex items-center gap-3 p-2 rounded-lg bg-sidebar-accent/50">
-          <Avatar className="h-8 w-8">
+      <SidebarFooter className="p-2">
+        <div className="flex items-center gap-2 p-1.5 rounded-lg bg-sidebar-accent/50">
+          <Avatar className="h-6 w-6">
             <AvatarImage src={userImage} alt={userName} />
-            <AvatarFallback className="bg-primary text-primary-foreground">
+            <AvatarFallback className="bg-primary text-primary-foreground text-xs">
               {userName.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate" data-testid="text-user-name">
+            <p className="text-xs font-medium truncate" data-testid="text-user-name">
               {userName}
             </p>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs px-1">
+            <div className="flex items-center gap-1">
+              <Badge variant="outline" className="text-xs px-1 py-0 h-4">
                 {getRoleLabel()}
               </Badge>
             </div>
           </div>
         </div>
-        <div className="pt-2">
+        <div className="pt-1">
           <Button 
             variant="outline" 
             size="sm" 
-            className="w-full"
+            className="w-full h-7 text-xs"
             onClick={() => {
               console.log('Logout clicked');
               window.location.href = "/api/logout";
